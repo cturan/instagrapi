@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import (
     BaseModel,
@@ -11,36 +11,28 @@ from pydantic import (
 )
 
 
-class TypesBaseModel(BaseModel):
-    model_config = ConfigDict(
-        coerce_numbers_to_str=True
-    )  # (jarrodnorwell) fixed city_id issue
-
-
 def validate_external_url(cls, v):
     if v is None or (v.startswith("http") and "://" in v) or isinstance(v, str):
         return v
     raise ValidationError("external_url must been URL or string")
 
 
-class Resource(TypesBaseModel):
+class Resource(BaseModel):
+    model_config = ConfigDict(
+        coerce_numbers_to_str=True
+    )  # (jarrodnorwell) fixed pk issue
+
     pk: str
     video_url: Optional[HttpUrl] = None  # for Video and IGTV
     thumbnail_url: HttpUrl
     media_type: int
 
 
-class BioLink(TypesBaseModel):
-    link_id: str
-    url: str
-    lynx_url: Optional[str] = None
-    link_type: Optional[str] = None
-    title: Optional[str] = None
-    is_pinned: Optional[bool] = None
-    open_external_url_with_in_app_browser: Optional[bool] = None
+class User(BaseModel):
+    model_config = ConfigDict(
+        coerce_numbers_to_str=True
+    )  # (jarrodnorwell) fixed city_id issue
 
-
-class User(TypesBaseModel):
     pk: str
     username: str
     full_name: str
@@ -52,7 +44,6 @@ class User(TypesBaseModel):
     follower_count: int
     following_count: int
     biography: Optional[str] = ""
-    bio_links: List[BioLink] = []
     external_url: Optional[str] = None
     account_type: Optional[int] = None
     is_business: bool
@@ -78,7 +69,7 @@ class User(TypesBaseModel):
     _external_url = validator("external_url", allow_reuse=True)(validate_external_url)
 
 
-class Account(TypesBaseModel):
+class Account(BaseModel):
     pk: str
     username: str
     full_name: str
@@ -96,14 +87,10 @@ class Account(TypesBaseModel):
     _external_url = validator("external_url", allow_reuse=True)(validate_external_url)
 
 
-class UserShort(TypesBaseModel):
-    def __hash__(self):
-        return hash(self.pk)
-
-    def __eq__(self, other):
-        if isinstance(other, UserShort):
-            return self.pk == other.pk
-        return NotImplemented
+class UserShort(BaseModel):
+    model_config = ConfigDict(
+        coerce_numbers_to_str=True
+    )  # (jarrodnorwell) fixed pk issue
 
     pk: str
     username: Optional[str] = None
@@ -112,16 +99,16 @@ class UserShort(TypesBaseModel):
     profile_pic_url_hd: Optional[HttpUrl] = None
     is_private: Optional[bool] = None
     # is_verified: bool  # not found in hashtag_medias_v1
-    # stories: List = [] # not found in fbsearch_suggested_profiles
+    stories: List = []
 
 
-class Usertag(TypesBaseModel):
+class Usertag(BaseModel):
     user: UserShort
     x: float
     y: float
 
 
-class Location(TypesBaseModel):
+class Location(BaseModel):
     pk: Optional[int] = None
     name: str
     phone: Optional[str] = ""
@@ -140,8 +127,8 @@ class Location(TypesBaseModel):
     # directory: Optional[dict] = {}
 
 
-class Media(TypesBaseModel):
-    pk: Union[str, int]
+class Media(BaseModel):
+    pk: str | int
     id: str
     code: str
     taken_at: datetime
@@ -169,7 +156,7 @@ class Media(TypesBaseModel):
     clips_metadata: dict = {}
 
 
-class MediaXma(TypesBaseModel):
+class MediaXma(BaseModel):
     # media_type: int
     video_url: HttpUrl  # for Video and IGTV
     title: Optional[str] = ""
@@ -182,7 +169,7 @@ class MediaXma(TypesBaseModel):
     preview_media_fbid: Optional[str] = None
 
 
-class MediaOembed(TypesBaseModel):
+class MediaOembed(BaseModel):
     title: str
     author_name: str
     author_url: str
@@ -200,14 +187,14 @@ class MediaOembed(TypesBaseModel):
     can_view: bool
 
 
-class Collection(TypesBaseModel):
+class Collection(BaseModel):
     id: str
     name: str
     type: str
     media_count: int
 
 
-class Comment(TypesBaseModel):
+class Comment(BaseModel):
     pk: str
     text: str
     user: UserShort
@@ -219,23 +206,22 @@ class Comment(TypesBaseModel):
     like_count: Optional[int] = None
 
 
-class Hashtag(TypesBaseModel):
+class Hashtag(BaseModel):
     id: str
     name: str
     media_count: Optional[int] = None
     profile_pic_url: Optional[HttpUrl] = None
 
 
-class StoryMention(TypesBaseModel):
+class StoryMention(BaseModel):
     user: UserShort
     x: Optional[float] = None
     y: Optional[float] = None
     width: Optional[float] = None
     height: Optional[float] = None
-    rotation: Optional[float] = None
 
 
-class StoryMedia(TypesBaseModel):
+class StoryMedia(BaseModel):
     # Instagram does not return the feed_media object when requesting story,
     # so you will have to make an additional request to get media and this is overhead:
     # media: Media
@@ -255,32 +241,30 @@ class StoryMedia(TypesBaseModel):
     media_code: Optional[str] = None
 
 
-class StoryHashtag(TypesBaseModel):
+class StoryHashtag(BaseModel):
     hashtag: Hashtag
     x: Optional[float] = None
     y: Optional[float] = None
     width: Optional[float] = None
     height: Optional[float] = None
-    rotation: Optional[float] = None
 
 
-class StoryLocation(TypesBaseModel):
+class StoryLocation(BaseModel):
     location: Location
     x: Optional[float] = None
     y: Optional[float] = None
     width: Optional[float] = None
     height: Optional[float] = None
-    rotation: Optional[float] = None
 
 
-class StoryStickerLink(TypesBaseModel):
+class StoryStickerLink(BaseModel):
     url: HttpUrl
     link_title: Optional[str] = None
     link_type: Optional[str] = None
     display_url: Optional[str] = None
 
 
-class StorySticker(TypesBaseModel):
+class StorySticker(BaseModel):
     id: Optional[str] = None
     type: Optional[str] = "gif"
     x: float
@@ -293,14 +277,14 @@ class StorySticker(TypesBaseModel):
     extra: Optional[dict] = {}
 
 
-class StoryBuild(TypesBaseModel):
+class StoryBuild(BaseModel):
     mentions: List[StoryMention]
     path: FilePath
     paths: List[FilePath] = []
     stickers: List[StorySticker] = []
 
 
-class StoryLink(TypesBaseModel):
+class StoryLink(BaseModel):
     webUri: HttpUrl
     x: float = 0.5126011
     y: float = 0.5168225
@@ -310,12 +294,11 @@ class StoryLink(TypesBaseModel):
     rotation: float = 0.0
 
 
-class Story(TypesBaseModel):
+class Story(BaseModel):
     pk: str
     id: str
     code: str
     taken_at: datetime
-    imported_taken_at: Optional[datetime] = None
     media_type: int
     product_type: Optional[str] = ""
     thumbnail_url: Optional[HttpUrl] = None
@@ -323,7 +306,6 @@ class Story(TypesBaseModel):
     video_url: Optional[HttpUrl] = None  # for Video and IGTV
     video_duration: Optional[float] = 0.0  # for Video and IGTV
     sponsor_tags: List[UserShort]
-    is_paid_partnership: Optional[bool] = False
     mentions: List[StoryMention]
     links: List[StoryLink]
     hashtags: List[StoryHashtag]
@@ -332,7 +314,7 @@ class Story(TypesBaseModel):
     medias: List[StoryMedia] = []
 
 
-class Guide(TypesBaseModel):
+class Guide(BaseModel):
     id: Optional[str] = None
     title: Optional[str] = None
     description: str
@@ -340,7 +322,7 @@ class Guide(TypesBaseModel):
     feedback_item: Optional[dict] = None
 
 
-class DirectMedia(TypesBaseModel):
+class DirectMedia(BaseModel):
     id: str
     media_type: int
     user: Optional[UserShort] = None
@@ -349,7 +331,7 @@ class DirectMedia(TypesBaseModel):
     audio_url: Optional[HttpUrl] = None
 
 
-class ReplyMessage(TypesBaseModel):
+class ReplyMessage(BaseModel):
     id: str
     user_id: Optional[str] = None
     timestamp: datetime
@@ -370,7 +352,7 @@ class ReplyMessage(TypesBaseModel):
     placeholder: Optional[dict] = None
 
 
-class DirectMessage(TypesBaseModel):
+class DirectMessage(BaseModel):
     id: str  # e.g. 28597946203914980615241927545176064
     user_id: Optional[str] = None
     thread_id: Optional[int] = None  # e.g. 340282366841710300949128531777654287254
@@ -392,16 +374,15 @@ class DirectMessage(TypesBaseModel):
     xma_share: Optional[MediaXma] = None
     clip: Optional[Media] = None
     placeholder: Optional[dict] = None
-    client_context: Optional[str] = None
 
 
-class DirectResponse(TypesBaseModel):
+class DirectResponse(BaseModel):
     unseen_count: Optional[int] = None
     unseen_count_ts: Optional[int] = None
     status: Optional[str] = None
 
 
-class DirectShortThread(TypesBaseModel):
+class DirectShortThread(BaseModel):
     id: str
     users: List[UserShort]
     named: bool
@@ -412,7 +393,7 @@ class DirectShortThread(TypesBaseModel):
     is_group: bool
 
 
-class DirectThread(TypesBaseModel):
+class DirectThread(BaseModel):
     pk: str  # thread_v2_id, e.g. 17898572618026348
     id: str  # thread_id, e.g. 340282366841510300949128268610842297468
     messages: List[DirectMessage]
@@ -456,7 +437,7 @@ class DirectThread(TypesBaseModel):
         return not any(timestamps)
 
 
-class Relationship(TypesBaseModel):
+class Relationship(BaseModel):
     user_id: str
     blocking: bool
     followed_by: bool
@@ -471,7 +452,7 @@ class Relationship(TypesBaseModel):
     outgoing_request: bool
 
 
-class RelationshipShort(TypesBaseModel):
+class RelationshipShort(BaseModel):
     user_id: str
     following: bool
     incoming_request: bool
@@ -482,7 +463,7 @@ class RelationshipShort(TypesBaseModel):
     outgoing_request: bool
 
 
-class Highlight(TypesBaseModel):
+class Highlight(BaseModel):
     pk: str  # 17895485401104052
     id: str  # highlight:17895485401104052
     latest_reel_media: int
@@ -496,12 +477,12 @@ class Highlight(TypesBaseModel):
     items: List[Story] = []
 
 
-class Share(TypesBaseModel):
+class Share(BaseModel):
     pk: str
     type: str
 
 
-class Track(TypesBaseModel):
+class Track(BaseModel):
     id: str
     title: str
     subtitle: str
@@ -525,7 +506,7 @@ class Track(TypesBaseModel):
     territory_validity_periods: dict
 
 
-class Note(TypesBaseModel):
+class Note(BaseModel):
     id: str
     text: str
     user_id: str
